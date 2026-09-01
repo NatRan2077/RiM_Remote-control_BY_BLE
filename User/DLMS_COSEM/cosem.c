@@ -298,8 +298,8 @@ bool PrepareGet(cosemLink_t *cosemLink) {
 			if ((data_u16 + 5) >
 			    (APDU_SIZE_MAX)) { // Если длинна данных плюс заголовок(5 байт)
 				                    // больше размера APDU
-				cnt -= 5; // Перемещаем указатель на начало заголовка и
-				          // перезаписываем его для блочной передачи
+				cnt -= 5;           // Перемещаем указатель на начало заголовка и
+				                    // перезаписываем его для блочной передачи
 				buff[cnt++] = APDU_GET_RESPONSE;
 				buff[cnt++] = GET_RESPONSE_WITH_DATABLOCK;
 				buff[cnt++] = cosemLink->invokeID;
@@ -318,7 +318,7 @@ bool PrepareGet(cosemLink_t *cosemLink) {
 				buff[cnt++] = BYTE_0(data_u16);
 				buff[cnt++] = attrs[attrID].type; // Тип аттрибута записывается
 				                                  // 13-м, и входит в длинну данных
-				data_u16--; // Поэтому вычитаем 1
+				data_u16--;                       // Поэтому вычитаем 1
 				memcpy((buff + cnt), (attrs[attrID].addr + 2),
 				       data_u16); // Копируем данные в буфер
 				cnt += data_u16;  // Увеличиваем счетчик на длинну данных

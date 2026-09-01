@@ -1,6 +1,7 @@
 /**
  * \file            service_cmd.c
- * \brief           Сервисные команды по USB для списка из 10 паролей (протокол - service_cmd.h)
+ * \brief           Сервисные команды по USB для списка из 10 паролей (протокол
+ * - service_cmd.h)
  */
 #include "service_cmd.h"
 #include "passwords.h"

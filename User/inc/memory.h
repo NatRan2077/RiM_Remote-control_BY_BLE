@@ -13,13 +13,14 @@
 #define MEMORY_PINCODE 0x0006            // Пин-код
 
 // Настройка моудя связи 0x0100 - 0x01FF
-#define MEMORY_SETTINGS_DEVICE_PASSWORD 0x0100 // Пароль для доступа к
-	                                            // настройкам
+#define MEMORY_SETTINGS_DEVICE_PASSWORD                                        \
+	0x0100 // Пароль для доступа к
+	       // настройкам
 
 // Данные о работе устройства 0x0300 - 0x03FF	номер страницы
 #define MEMORY_OPERATING_TIME 0x0300 // Время наработки
 #define MEMORY_LAST_SESSION_OPERATING_TIME                                     \
-	0x0302 // Время наработки последнего сеанса (периода)
+	0x0302                        // Время наработки последнего сеанса (периода)
 #define MEMORY_CNT_STARTS 0x0304 // Cчетчик стартов программы
 //----------------------------------------------------------------------------//
 // Для удаленного обновления 0x0400 - 0x07FF		номер страницы
@@ -27,7 +28,7 @@
 #define MEMORY_UPDATE_DEVICE_BUFF_END 0x077F // Буфер конец(224 KB) 896 страницы
 #define MEMORY_UPDATE_DEVICE_CRC16                                             \
 	0x07F8 // Контрольная сумма записанной прошивки CRC-16
-#define MEMORY_UPDATE_DEVICE_MD5 0x07FA // Хэш-сумма записанной прошивки MD5
+#define MEMORY_UPDATE_DEVICE_MD5 0x07FA  // Хэш-сумма записанной прошивки MD5
 #define MEMORY_UPDATE_DEVICE_FLAG 0x07FC // Флаг для удаленного обновления
 #define MEMORY_UPDATE_DEVICE_LAST_WRITE_BLOCK                                  \
 	0x07FE // Последний записанный блок (по сути длина прошивки)

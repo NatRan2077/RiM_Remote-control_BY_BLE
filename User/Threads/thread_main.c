@@ -170,12 +170,12 @@ void lcd_out(u8 dlmsElement) { // ?????????? ??????
 	} else {
 		ShowOBIS((objDLMS_t)dlmsElement);
 		//		_SYSLOG_("DLMS - OBIS: %u.%u.%u.%u.%u.%u",
-		//dlms.obj[dlmsElement].pConst->OBIS[0],
-		//dlms.obj[dlmsElement].pConst->OBIS[1],
-		//dlms.obj[dlmsElement].pConst->OBIS[2],
-		//dlms.obj[dlmsElement].pConst->OBIS[3],
-		//dlms.obj[dlmsElement].pConst->OBIS[4],
-		//dlms.obj[dlmsElement].pConst->OBIS[5]);
+		// dlms.obj[dlmsElement].pConst->OBIS[0],
+		// dlms.obj[dlmsElement].pConst->OBIS[1],
+		// dlms.obj[dlmsElement].pConst->OBIS[2],
+		// dlms.obj[dlmsElement].pConst->OBIS[3],
+		// dlms.obj[dlmsElement].pConst->OBIS[4],
+		// dlms.obj[dlmsElement].pConst->OBIS[5]);
 		ShowData(dlms.obj[dlmsElement]);
 	}
 }

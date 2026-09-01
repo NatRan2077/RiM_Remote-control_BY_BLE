@@ -20,16 +20,16 @@
 #define MEMORY_SELECT() GPIO_ResetBits(MEMORY_GPIO_Port, MEMORY_CS_Pin)
 #define MEMORY_DESELECT() GPIO_SetBits(MEMORY_GPIO_Port, MEMORY_CS_Pin)
 //----------------------------------------------------------------------------//
-#define MEMORY_WREN 0x06 // Команда разрешения записи
-#define MEMORY_WRDI 0x04 // Команда запрета записи
+#define MEMORY_WREN 0x06         // Команда разрешения записи
+#define MEMORY_WRDI 0x04         // Команда запрета записи
 #define MEMORY_PAGE_PROGRAM 0x02 // Команда записи страницы
-#define MEMORY_RDSR 0x05 // Команда чтения статусного регистра
-#define MEMORY_READ 0x03    // Команда чтения байт
-#define MEMORY_BE 0xD8      // Команда стирания блока 64К
-#define MEMORY_CE 0x60      // Команда стирания чипа
-#define MEMORY_PE 0x81      // Команда стирания страницы
-#define MEMORY_RDID 0x9F    // Команда чтения ID
-#define MEMORY_WIP_bit 0x01 // Write in Progress
+#define MEMORY_RDSR 0x05         // Команда чтения статусного регистра
+#define MEMORY_READ 0x03         // Команда чтения байт
+#define MEMORY_BE 0xD8           // Команда стирания блока 64К
+#define MEMORY_CE 0x60           // Команда стирания чипа
+#define MEMORY_PE 0x81           // Команда стирания страницы
+#define MEMORY_RDID 0x9F         // Команда чтения ID
+#define MEMORY_WIP_bit 0x01      // Write in Progress
 //----------------------------------------------------------------------------//
 #define P25Q16SH_MANUFACTURE_ID 0x85
 #define P25Q16SH_MEMORY_TYPE 0x60

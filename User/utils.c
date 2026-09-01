@@ -213,11 +213,12 @@ void Clear_Buffer(u8 *buff, u16 size) { // Заполнить буфер нулями
 //		for(u8 i = 0; i < len; i++){
 //			UART4->DATA = str[i];
 //			while(0 == UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//ожидаем
-//передачи байта 			UART_ClearFlag(UART4, UART_INTSTS_TXDONE);
+// передачи байта 			UART_ClearFlag(UART4, UART_INTSTS_TXDONE);
 //		}
 //		UART4->DATA = '\r';
 //		while(0 == UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//ожидаем передачи
-//байта 		UART_ClearFlag(UART4, UART_INTSTS_TXDONE); 		UART4->DATA = '\n'; 		while(0
+// байта 		UART_ClearFlag(UART4, UART_INTSTS_TXDONE); 		UART4->DATA =
+// '\n'; 		while(0
 //== UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//ожидаем передачи байта
 //		UART_ClearFlag(UART4, UART_INTSTS_TXDONE);
 //		u32 tt = 100000;

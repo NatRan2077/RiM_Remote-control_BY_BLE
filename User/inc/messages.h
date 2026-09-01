@@ -49,7 +49,7 @@ typedef enum {
 	MSG_BTN_1_CLAMPED, // Сообщение о зажатой конпки при старте
 	MSG_BTN_2_CLAMPED, // Сообщение о зажатой конпки при старте
 	MSG_BTN_1_2_COMBINATION_MID,
-	MSG_BLE_START, // Сообщение для запуска модуля BLE
+	MSG_BLE_START,                 // Сообщение для запуска модуля BLE
 	MSG_BLE_CONNECT_SUCCESS,       // Успешнео подключено
 	MSG_BLE_CONNECT_ERROR_PINCODE, // Не верный пинкод
 	MSG_BLE_CONNECT_NOT_FOUND,     // Устройство не найдено

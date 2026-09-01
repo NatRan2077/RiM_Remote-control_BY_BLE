@@ -235,14 +235,14 @@ typedef enum {
 } RelayStatus_t; // Состояние реле
 //----------------------------------------------------------------------------//
 typedef struct {
-	statusTamper_t Eqi;      // ПКЭ
-	statusTamper_t Cover;    // Пломба клеммной крышки
-	statusTamper_t Meter;    // Пломба корпуса
-	statusTamper_t Magnet;   // Магнитрое поле
-	statusTamper_t Battery;  // Пломба отсека батарейки
-	statusTamper_t Uhf;      // СВЧ
-	statusTamper_t LimPower; // Превышение порога мощности
-	statusTamper_t Diag;     // Статус диагностики
+	statusTamper_t Eqi;       // ПКЭ
+	statusTamper_t Cover;     // Пломба клеммной крышки
+	statusTamper_t Meter;     // Пломба корпуса
+	statusTamper_t Magnet;    // Магнитрое поле
+	statusTamper_t Battery;   // Пломба отсека батарейки
+	statusTamper_t Uhf;       // СВЧ
+	statusTamper_t LimPower;  // Превышение порога мощности
+	statusTamper_t Diag;      // Статус диагностики
 	statusTamper_t Unbalance; // Небаланс
 
 	status_t Rtc;        // ЧРВ
@@ -280,7 +280,7 @@ typedef struct {
 
 	bool fShow; // Флаг, что элемент доступен для отображения (сбрасываем при
 	            // отображении, выставляем при считывании информации со счетчика)
-} obj_t; // Структура для хранения данных объектов
+} obj_t;       // Структура для хранения данных объектов
 //----------------------------------------------------------------------------//
 typedef struct {
 	//	u32 lastReadElement;		//Последний прочитанный элемент

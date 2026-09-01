@@ -32,9 +32,9 @@ extern uint8_t g_target_type;
 //  (методика из appnote HopeRF, используется для отладки радиочасти).
 //----------------------------------------------------------------------------//
 #define AFEC_CLK_REG REG32(0x40011000UL) // блок AFEC
-#define AFEC_DBG_PORT_EN (0x01UL << 28) // тактирование отладочного порта
-#define DIAG_PORT0_ENABLE 0x80u // включить dbg port 0
-#define DIAG0_SEL_RXTX_EN 0x03u // DIAG0[6:0]: сигналы RxEn/TxEn
+#define AFEC_DBG_PORT_EN (0x01UL << 28)  // тактирование отладочного порта
+#define DIAG_PORT0_ENABLE 0x80u          // включить dbg port 0
+#define DIAG0_SEL_RXTX_EN 0x03u          // DIAG0[6:0]: сигналы RxEn/TxEn
 
 void turnOnRxEnTxEn(void) {
 	if (ip_diagcntl_get() != (DIAG_PORT0_ENABLE | DIAG0_SEL_RXTX_EN)) {

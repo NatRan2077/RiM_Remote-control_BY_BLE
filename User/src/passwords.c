@@ -33,12 +33,12 @@ static void default_name(char *dst, u8 slot) {
 }
 //----------------------------------------------------------------------------//
 static void set_defaults(void) {
-    store.selected = 0;
-    for (u8 i = 0; i < PWD_COUNT; i++) {
-        strcpy(store.item[i].name, "\xCF\xC0\xD0\xCE\xCB\xDC");  // ПАРОЛЬ
-        store.item[i].value = 0;
-    }
-    store.item[0].value = 123456;
+	store.selected = 0;
+	for (u8 i = 0; i < PWD_COUNT; i++) {
+		strcpy(store.item[i].name, "\xCF\xC0\xD0\xCE\xCB\xDC"); // ПАРОЛЬ
+		store.item[i].value = 0;
+	}
+	store.item[0].value = 123456;
 }
 //----------------------------------------------------------------------------//
 void Passwords_Load(void) {

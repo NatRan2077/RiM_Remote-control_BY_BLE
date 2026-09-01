@@ -13,8 +13,8 @@
 #include "common_types.h"
 #include <stdbool.h>
 
-#define PWD_COUNT 10    // фиксированное число слотов
-#define PWD_NAME_LEN 11 // символов имени (+1 на '\0' = 12 байт)
+#define PWD_COUNT 10          // фиксированное число слотов
+#define PWD_NAME_LEN 11       // символов имени (+1 на '\0' = 12 байт)
 #define PWD_VALUE_MAX 999999u // предел BLE passkey (6 цифр)
 
 //----------------------------------------------------------------------------//
@@ -39,11 +39,11 @@ typedef struct {
 void Passwords_Load(void); // загрузить из флеша при старте
 bool Passwords_Save(void); // сохранить весь массив во флеш
 
-u8 Passwords_Count(void);    // всегда PWD_COUNT (слоты фикс.)
-u8 Passwords_Selected(void); // индекс выбранного
-void Passwords_Select(u8 index); // выбрать активный + сразу во флеш
+u8 Passwords_Count(void);           // всегда PWD_COUNT (слоты фикс.)
+u8 Passwords_Selected(void);        // индекс выбранного
+void Passwords_Select(u8 index);    // выбрать активный + сразу во флеш
 void Passwords_SelectRAM(u8 index); // выбрать активный только в ОЗУ (быстро)
-bool Passwords_SaveSelected(void); // дописать выбранный во флеш позже
+bool Passwords_SaveSelected(void);  // дописать выбранный во флеш позже
 const password_t *
 Passwords_Get(u8 index); // доступ к слоту (NULL если вне диапазона)
 

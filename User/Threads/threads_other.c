@@ -457,9 +457,9 @@ PT_THREAD(thread_status(pt_t *pt)) {
 					}
 					//					switch(dlms.status.LimPower){
 					//						case STATUS_TAMPER_OK:		lcd.text(HIDE, 1,
-					//S10);break; 						case STATUS_TAMPER_FLAG:	lcd.text(SHOW, 1,
-					//S10);break; 						case STATUS_TAMPER_ACTIVE:	lcd.text(SHOW, 1,
-					//S10);break;
+					// S10);break; 						case STATUS_TAMPER_FLAG:
+					// lcd.text(SHOW, 1, S10);break; 						case
+					// STATUS_TAMPER_ACTIVE:	lcd.text(SHOW, 1, S10);break;
 					//					}
 				}
 			}
@@ -627,9 +627,9 @@ PT_THREAD(thread_status(pt_t *pt)) {
 					}
 					//					switch(dlms.status.LimPower){
 					//						case STATUS_TAMPER_OK:		lcd.text(HIDE, 1,
-					//S10);break; 						case STATUS_TAMPER_FLAG:	lcd.text(SHOW, 1,
-					//S10);break; 						case STATUS_TAMPER_ACTIVE:	lcd.text(HIDE, 1,
-					//S10);break;
+					// S10);break; 						case STATUS_TAMPER_FLAG:
+					// lcd.text(SHOW, 1, S10);break; 						case
+					// STATUS_TAMPER_ACTIVE:	lcd.text(HIDE, 1, S10);break;
 					//					}
 				}
 			}
@@ -763,8 +763,8 @@ PT_THREAD(thread_systemInfo(pt_t *pt)) {
 				   plus the raw ADC counts, to tell apart a real dead battery
 				   from a broken/miswired measurement channel */
 				u32 rawPinMv = ADC_ConverValueToVoltage(adcSum, ADC_BATT);
-				_SYSLOG_("DIAG ch=BATT adc=%lu pin_mv=%lu vcc_mv=%lu",
-				         (u32)adcSum, rawPinMv, SystemInfo.Vcc.MCU);
+				_SYSLOG_("DIAG ch=BATT adc=%lu pin_mv=%lu vcc_mv=%lu", (u32)adcSum,
+				         rawPinMv, SystemInfo.Vcc.MCU);
 				SystemInfo.Vcc.Batt = ADC_BATT_K * rawPinMv;
 				if (SystemInfo.Vcc.Batt < BAT_LOWER_VOLT_LIM) {
 					SystemInfo.status.vBatt = V_BATT_STATUS_LOWER;
