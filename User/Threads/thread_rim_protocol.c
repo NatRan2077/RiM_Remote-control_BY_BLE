@@ -14,7 +14,7 @@
 //   S39    - состояние ВВ: горит = включён (ВКЛ), мигает = идёт операция
 //   S46    - заряд конденсаторов
 //   S50    - блокировка
-//   S39    - авария
+//   S53    - авария
 //----------------------------------------------------------------------------//
 #include "threads.h"
 #include "messages.h"
@@ -50,9 +50,6 @@ extern bool g_connecting;     // идёт попытка подключения 
 #define RIM_ERR_NO_CHANGE                                                      \
 	16 // отказ "состояние ВВ уже такое"
 	   // (ВКЛ включённому / ОТКЛ отключённому)
-#define RIM_ERR_NOT_READY                                                      \
-	17                      // отказ "блок не готов" (нет готовности к операции)
-#define RIM_ERR_BLOCKED 18 // отказ "сработала блокировка" (ВКЛ при блокировке)
 
 // Смещения полей внутри секции данных DATA телеметрии 0x40
 // (DATA[0..3] - версия прошивки, DATA[4..7] - матрица, Uint32 LE)
@@ -84,7 +81,6 @@ extern bool g_connecting;     // идёт попытка подключения 
 #define SEND_TIMEOUT_MS 3000 // ожидание ответа на команду
 #define ACK_SHOW_MS 3000     // сколько держать УСПЕХ/ОШИБКА
 #define BLINK_MS 400         // период мигания
-#define BUBBLE_ANIM_MS 3000 // длительность пузырьковой анимации при подключении
 //----------------------------------------------------------------------------//
 //  Экран поиска: "устр<n>" - количество найденных БУ (1 или 2 цифры), CP1251.
 //  Байты - буквы У,С,Т,Р; на сегментном ЖКИ строчные и заглавные совпадают.
@@ -95,9 +91,6 @@ extern bool g_connecting;     // идёт попытка подключения 
 #define TXT_SENDING "\xCE\xD2\xCF\xD0. "        // "ОТПР. " - запрос ушёл
 #define TXT_SEND_OK "\xD3\xD1\xCF\xC5\xD5 "     // "УСПЕХ " - подтверждено
 #define TXT_SEND_ERR "\xCE\xD8\xC8\xC1\xCA\xC0" // "ОШИБКА" - отказ/нет ответа
-#define TXT_NOT_READY                                                          \
-	"\xCD\xC5 \xC3\xCE\xD2"               // "НЕ ГОТ" - блок не готов (отказ 17)
-#define TXT_BLOCKED "\xC1\xCB\xCE\xCA  " // "БЛОК" - блокировка (отказ 18)
 //----------------------------------------------------------------------------//
 static u8 devSel = 0; // выбранное устройство в списке
 //----------------------------------------------------------------------------//
@@ -113,9 +106,8 @@ static const rimCmd_t MENU[] = {
     {COP_ON_VV, "\xC2\xCA\xCB   "},     // ВКЛ
     {COP_OFF_VV, "\xCE\xD2\xCA\xCB  "}, // ОТКЛ
     {0, "\xD1\xD7.\xC2\xCE "}, // СЧ.ВО (удержание = сброс лок. счётчика)
-    {0,
-     "\xD2\xC8\xCF \xC0\xC2"}, // ТИП АВ (только просмотр, отправка отключена)
-    {0, "\xC2\xDB\xD5\xCE\xC4 "}, // ВЫХОД (разрыв соединения)
+    {COP_SERVICE, "\xD2\xC8\xCF \xC0\xC2"}, // ТИП АВ (повторный опрос 0x41)
+    {0, "\xC2\xDB\xD5\xCE\xC4 "},           // ВЫХОД (разрыв соединения)
 };
 #define MENU_CNT_VIEW 2 // индекс пункта "СЧ.ВО"
 #define MENU_EXIT 4     // индекс пункта "ВЫХОД"
@@ -152,7 +144,6 @@ static u16 rim_crc16(const u8 *d, u16 len) {
 			}
 		}
 	}
-
 	return crc;
 }
 //----------------------------------------------------------------------------//
@@ -197,106 +188,7 @@ static void rim_send(u8 cop) {
 //  Разбор ответа: ищем в буфере внутренний пакет РиМ (96 COP CNT ... CRC)
 //  и проверяем CRC. Мусор перед ним пропускаем - это байты обёртки шлюза.
 //----------------------------------------------------------------------------//
-//  Обработка одного разобранного (CRC уже проверен) кадра РиМ.
-static void rim_handle_packet(u8 cop, const u8 *data, u8 dlen) {
-	_SYSLOG_("[RIM RX] COP=%02X LEN=%d", cop, dlen);
-	if (dlen) {
-		_SYSLOG_DATA_("[RIM DATA]", (u8 *)data, dlen);
-	}
-
-	//--- ответ с ошибкой: COP | 0x80 --------------------------------//
-	if (cop & COP_ERR_FLAG) {
-		const u8 errCop = (u8)(cop & 0x7F);
-		lastErr = dlen ? data[0] : 0xFF;
-		_SYSLOG_("[RIM ERR] cop=%02X err=%02X", errCop, lastErr);
-
-		// ВКЛ уже включённому (или ОТКЛ отключённому): блок отвечает
-		// отказом 16 "состояние не изменилось". Для оператора это не
-		// ошибка - выключатель и так в нужном состоянии: показываем УСПЕХ
-		if (((COP_ON_VV == errCop) || (COP_OFF_VV == errCop)) &&
-		    (RIM_ERR_NO_CHANGE == lastErr)) {
-			lastErr = 0;
-			if (SEND_WAIT == sendState) {
-				sendState = SEND_OK;
-				tim.reset(TIMER_WAIT_BETWEEN_REQ);
-			}
-			return;
-		}
-
-		// Отказ на фоновый служебный запрос 0x41 (автозапрос заводского
-		// номера при подключении) на экран не выводим - отправка "ТИП АВ"
-		// оператором отключена, эта команда бывает только фоновой.
-		if (COP_SERVICE == errCop) {
-			lastErr = 0;
-			return;
-		}
-
-		sendState = SEND_ERR;
-		tim.reset(TIMER_WAIT_BETWEEN_REQ);
-		return;
-	}
-
-	switch (cop) {
-	//--- телеметрия: матрица текущих состояний -------------------//
-	case COP_TELEMETRY:
-		if (dlen >= TLM_MATRIX_OFFSET + 4) {
-			matrix = ((u32)data[TLM_MATRIX_OFFSET]) |
-			         ((u32)data[TLM_MATRIX_OFFSET + 1] << 8) |
-			         ((u32)data[TLM_MATRIX_OFFSET + 2] << 16) |
-			         ((u32)data[TLM_MATRIX_OFFSET + 3] << 24);
-			_SYSLOG_("[RIM MATRIX] %08X", matrix);
-		}
-		if (dlen >= TLM_CNT_LOCAL + 4) {
-			cntGlobal = ((u32)data[TLM_CNT_GLOBAL]) |
-			            ((u32)data[TLM_CNT_GLOBAL + 1] << 8) |
-			            ((u32)data[TLM_CNT_GLOBAL + 2] << 16) |
-			            ((u32)data[TLM_CNT_GLOBAL + 3] << 24);
-			cntLocal = ((u32)data[TLM_CNT_LOCAL]) |
-			           ((u32)data[TLM_CNT_LOCAL + 1] << 8) |
-			           ((u32)data[TLM_CNT_LOCAL + 2] << 16) |
-			           ((u32)data[TLM_CNT_LOCAL + 3] << 24);
-			_SYSLOG_("[RIM CNT] glob=%u loc=%u", cntGlobal, cntLocal);
-		}
-		break;
-
-	//--- служебная информация 0x41 ------------------------------//
-	//  Формат DATA дан по наблюдениям: первые 4 байта содержат
-	//  заводской номер (Uint32 LE), далее версия платы и ПО.
-	case COP_SERVICE:
-		if (dlen >= 4) {
-			serialBU = ((u32)data[0]) | ((u32)data[1] << 8) |
-			           ((u32)data[2] << 16) | ((u32)data[3] << 24);
-			_SYSLOG_("[RIM SERVICE] SN=%u", serialBU);
-		}
-		if (SEND_WAIT == sendState) { // ответ на команду ТИП АВ
-			lastErr = 0;
-			sendState = SEND_OK;
-			tim.reset(TIMER_WAIT_BETWEEN_REQ);
-		}
-		break;
-
-	//--- эхо команды ВКЛ/ОТКЛ = команда принята -----------------//
-	case COP_ON_VV:
-	case COP_OFF_VV:
-	case COP_CNT_RESET:
-		lastErr = 0;
-		if (SEND_WAIT == sendState) {
-			sendState = SEND_OK;
-			tim.reset(TIMER_WAIT_BETWEEN_REQ);
-		}
-		break;
-
-	default:
-		break;
-	}
-}
-//----------------------------------------------------------------------------//
-//  Разбор всего принятого буфера. Транспорт склеивает кадры, поэтому в буфере
-//  может лежать НЕСКОЛЬКО пакетов РиМ сразу (напр. ответ телеметрии 0x40 и
-//  ответ на команду в одной посылке). Разбираем ВСЕ кадры, а не только первый,
-//  иначе ответ на команду теряется при очистке буфера -> ложная "ОШИБКА".
 static bool rim_parse(const u8 *buf, u8 len) {
-	bool found = false;
 	for (u8 i = 0; (u8)(i + 5) <= len; i++) {
 		if (buf[i] != RIM_ID) {
 			continue;
@@ -317,56 +209,138 @@ static bool rim_parse(const u8 *buf, u8 len) {
 			continue;
 		}
 
-		rim_handle_packet(buf[i + 1], &buf[i + 3], (u8)(cnt - 2));
-		found = true;
-		i +=
-		    (u8)(total - 1); // перескочить разобранный кадр (i++ в for добавит 1)
-	}
-	return found;
-}
-//----------------------------------------------------------------------------//
-//  Аварии: коды 1..9. Их может быть несколько одновременно, поэтому
-//  собираем ВСЕ активные коды в массив (а не только первый по приоритету -
-//  иначе, напр., код 9 "общий отказ" никогда не показывался, т.к. его всегда
-//  перекрывал более ранний код).
-//  codes[] - буфер минимум на 9 элементов. Возвращает количество кодов.
-//----------------------------------------------------------------------------//
-static const struct {
-	u32 bit;
-	u8 code;
-} ALARM_TBL[] = {
-    {M_BLOCK, 1},      // сработала блокировка
-    {M_CTRL_FAIL, 2},  // неисправность управления
-    {M_KZ_CMD, 3},     // КЗ в ЦУ при команде
-    {M_NO_CHANGE, 4},  // состояние ВВ не изменилось
-    {M_KZ_POLL, 5},    // КЗ в ЦУ при опросе
-    {M_BREAK_POLL, 6}, // обрыв цепи в ЦУ при опросе
-    {M_BUS48_ERR, 7},  // неисправна шина 48 В
-    {M_OP_FAIL, 8},    // неисправность ОП
-    {M_FAULT, 9},      // общий отказ оборудования
-};
-#define ALARM_TBL_CNT (sizeof(ALARM_TBL) / sizeof(ALARM_TBL[0]))
+		u8 cop = buf[i + 1];
+		const u8 *data = &buf[i + 3];
+		u8 dlen = (u8)(cnt - 2); // размер полезных DATA
 
-static u8 rim_alarm_list(u32 m, u8 *codes) {
-	u8 n = 0;
-	for (u8 i = 0; i < ALARM_TBL_CNT; i++) {
-		if (m & ALARM_TBL[i].bit) {
-			codes[n++] = ALARM_TBL[i].code;
+		_SYSLOG_("[RIM RX] COP=%02X LEN=%d", cop, dlen);
+		if (dlen) {
+			_SYSLOG_DATA_("[RIM DATA]", (u8 *)data, dlen);
 		}
-	}
-	return n;
-}
 
-//  Показать все коды аварий в ряд на разрядах 8..15 (до 8 кодов),
-//  выравнивание влево, хвост - пробелами.
-static void rim_show_alarm_row(const u8 *codes, u8 n) {
-	u8 p = 8;
-	for (u8 i = 0; (i < n) && (p <= 15); i++) {
-		lcd.show_val_pos(codes[i], p++);
+		//--- ответ с ошибкой: COP | 0x80 --------------------------------//
+		if (cop & COP_ERR_FLAG) {
+			const u8 errCop = (u8)(cop & 0x7F);
+			lastErr = dlen ? data[0] : 0xFF;
+			_SYSLOG_("[RIM ERR] cop=%02X err=%02X", errCop, lastErr);
+
+			// ВКЛ уже включённому (или ОТКЛ отключённому): блок отвечает
+			// отказом 16 "состояние не изменилось". Для оператора это не
+			// ошибка - выключатель и так в нужном состоянии: показываем УСПЕХ
+			if (((COP_ON_VV == errCop) || (COP_OFF_VV == errCop)) &&
+			    (RIM_ERR_NO_CHANGE == lastErr)) {
+				lastErr = 0;
+				if (SEND_WAIT == sendState) {
+					sendState = SEND_OK;
+					tim.reset(TIMER_WAIT_BETWEEN_REQ);
+				}
+				return true;
+			}
+
+			// Отказ на служебный запрос (ТИП АВ / фоновый 0x41):
+			// на экран не выводим, индикацию не трогаем
+			if (COP_SERVICE == errCop) {
+				lastErr = 0;
+				if (SEND_WAIT == sendState) {
+					sendState = SEND_IDLE;
+				}
+				return true;
+			}
+
+			sendState = SEND_ERR;
+			tim.reset(TIMER_WAIT_BETWEEN_REQ);
+			return true;
+		}
+
+		switch (cop) {
+		//--- телеметрия: матрица текущих состояний -------------------//
+		case COP_TELEMETRY:
+			if (dlen >= TLM_MATRIX_OFFSET + 4) {
+				matrix = ((u32)data[TLM_MATRIX_OFFSET]) |
+				         ((u32)data[TLM_MATRIX_OFFSET + 1] << 8) |
+				         ((u32)data[TLM_MATRIX_OFFSET + 2] << 16) |
+				         ((u32)data[TLM_MATRIX_OFFSET + 3] << 24);
+				_SYSLOG_("[RIM MATRIX] %08X", matrix);
+			}
+			if (dlen >= TLM_CNT_LOCAL + 4) {
+				cntGlobal = ((u32)data[TLM_CNT_GLOBAL]) |
+				            ((u32)data[TLM_CNT_GLOBAL + 1] << 8) |
+				            ((u32)data[TLM_CNT_GLOBAL + 2] << 16) |
+				            ((u32)data[TLM_CNT_GLOBAL + 3] << 24);
+				cntLocal = ((u32)data[TLM_CNT_LOCAL]) |
+				           ((u32)data[TLM_CNT_LOCAL + 1] << 8) |
+				           ((u32)data[TLM_CNT_LOCAL + 2] << 16) |
+				           ((u32)data[TLM_CNT_LOCAL + 3] << 24);
+				_SYSLOG_("[RIM CNT] glob=%u loc=%u", cntGlobal, cntLocal);
+			}
+			break;
+
+		//--- служебная информация 0x41 ------------------------------//
+		//  Формат DATA дан по наблюдениям: первые 4 байта содержат
+		//  заводской номер (Uint32 LE), далее версия платы и ПО.
+		case COP_SERVICE:
+			if (dlen >= 4) {
+				serialBU = ((u32)data[0]) | ((u32)data[1] << 8) |
+				           ((u32)data[2] << 16) | ((u32)data[3] << 24);
+				_SYSLOG_("[RIM SERVICE] SN=%u", serialBU);
+			}
+			if (SEND_WAIT == sendState) { // ответ на команду ТИП АВ
+				lastErr = 0;
+				sendState = SEND_OK;
+				tim.reset(TIMER_WAIT_BETWEEN_REQ);
+			}
+			break;
+
+		//--- эхо команды ВКЛ/ОТКЛ = команда принята -----------------//
+		case COP_ON_VV:
+		case COP_OFF_VV:
+		case COP_CNT_RESET:
+			lastErr = 0;
+			if (SEND_WAIT == sendState) {
+				sendState = SEND_OK;
+				tim.reset(TIMER_WAIT_BETWEEN_REQ);
+			}
+			break;
+
+		default:
+			break;
+		}
+		return true;
 	}
-	while (p <= 15) {
-		lcd.show_val_pos(SPACE, p++);
+	return false;
+}
+//----------------------------------------------------------------------------//
+//  Код аварии 1..9 (0 = аварии нет)
+//----------------------------------------------------------------------------//
+static u8 rim_alarm_code(u32 m) {
+	if (m & M_BLOCK) {
+		return 1; // сработала блокировка
 	}
+	if (m & M_CTRL_FAIL) {
+		return 2; // неисправность управления
+	}
+	if (m & M_KZ_CMD) {
+		return 3; // КЗ в ЦУ при команде
+	}
+	if (m & M_NO_CHANGE) {
+		return 4; // состояние ВВ не изменилось
+	}
+	if (m & M_KZ_POLL) {
+		return 5; // КЗ в ЦУ при опросе
+	}
+	if (m & M_BREAK_POLL) {
+		return 6; // обрыв цепи в ЦУ при опросе
+	}
+	if (m & M_BUS48_ERR) {
+		return 7; // неисправна шина 48 В
+	}
+	if (m & M_OP_FAIL) {
+		return 8; // неисправность ОП
+	}
+	if (m & M_FAULT) {
+		return 9; // общий отказ оборудования
+	}
+	return 0;
 }
 //----------------------------------------------------------------------------//
 //  Разряды ЖКИ 17..23
@@ -375,20 +349,6 @@ static void rim_show_serial(u32 sn) {
 	for (s8 p = 23; p >= 17; p--) {
 		lcd.show_val_pos((u8)(sn % 10), (u8)p);
 		sn /= 10;
-	}
-}
-
-//----------------------------------------------------------------------------//
-//  Пузырьковая анимация на разрядах 17..23 (только штатные глифы show_val_pos):
-//  CHAR_o (низ) -> LINE (центр) -> GRADUS (верх) -> SPACE - пузырёк как будто
-//  поднимается снизу вверх. Фаза смещена по столбцам, чтобы пузырьки бежали.
-//----------------------------------------------------------------------------//
-static void rim_show_bubbles(void) {
-	static const u8 FRAME[4] = {CHAR_o, LINE, GRADUS, SPACE}; // низ->центр->верх
-	const u8 phase = (u8)(tim.get(TIMER_GENERAL) / 150);
-	u8 col = 0;
-	for (u8 p = 17; p <= 23; p++, col++) {
-		lcd.show_val_pos(FRAME[(phase + col) & 3], p);
 	}
 }
 
@@ -499,24 +459,6 @@ static void rim_draw_scan(void) {
 	}
 
 	lcd.text(g_ble_fail && blink ? SHOW : HIDE, 1, S39);
-
-	// пузырьковая анимация первые BUBBLE_ANIM_MS после старта подключения
-	//	static u32 animStart = 0;
-	//	static bool prevConn = false;
-	//	if (g_connecting && !prevConn) {
-	//		animStart = tim.get(TIMER_GENERAL); // момент начала подключения
-	//	}
-	//	prevConn = g_connecting;
-	//
-	//	if (g_connecting &&
-	//	    ((tim.get(TIMER_GENERAL) - animStart) < BUBBLE_ANIM_MS)) {
-	//		rim_show_bubbles();
-	//	} else {
-	//		for (u8 p = 17; p <= 23; p++) {
-	//			lcd.show_val_pos(SPACE, p);
-	//		}
-	//	}
-
 	rim_show_batt(blink);
 	ShowRSSI(rssiBLE);
 }
@@ -563,16 +505,17 @@ static void rim_draw_pwd_select(void) {
 	txt[6] = 0;
 	lcd.showText(txt);
 
-	// 10-15: сам пароль (значение) — всегда 6 цифр с ведущими нулями
+	// 8-15: сам пароль (значение), без ведущих нулей
 	{
 		u32 v = p->value;
-		for (s8 pos = 15; pos >= 10; pos--) {
-			lcd.show_val_pos((u8)(v % 10), (u8)pos);
+		for (s8 pos = 15; pos >= 8; pos--) {
+			if ((v == 0) && (pos != 15)) {
+				lcd.show_val_pos(SPACE, (u8)pos);
+			} else {
+				lcd.show_val_pos((u8)(v % 10), (u8)pos);
+			}
 			v /= 10;
 		}
-		// позиции 8-9 гасим (passkey занимает 6 разрядов, а поле — 8)
-		lcd.show_val_pos(SPACE, 8);
-		lcd.show_val_pos(SPACE, 9);
 	}
 
 	// 17-23: какой пароль по счёту - "N.10" (номер.всего), N от 1
@@ -608,8 +551,7 @@ static void rim_draw_pwd_select(void) {
 //----------------------------------------------------------------------------//
 static void rim_draw(void) {
 	const bool blink = (((tim.get(TIMER_GENERAL) / BLINK_MS) & 1) != 0);
-	u8 alarmCodes[ALARM_TBL_CNT];
-	const u8 nAlarm = rim_alarm_list(matrix, alarmCodes);
+	const u8 alarm = rim_alarm_code(matrix);
 	const bool exec = (matrix & (M_EXEC_ANY | M_EXEC_ON | M_EXEC_OFF)) != 0;
 
 	// 1-6: текст выбранной команды или состояние отправки
@@ -621,14 +563,7 @@ static void rim_draw(void) {
 		lcd.showText(TXT_SEND_OK);
 		break;
 	case SEND_ERR:
-		// осмысленный текст вместо голого кода отказа
-		if (RIM_ERR_NOT_READY == lastErr) {
-			lcd.showText(TXT_NOT_READY); // 17 - блок не готов
-		} else if (RIM_ERR_BLOCKED == lastErr) {
-			lcd.showText(TXT_BLOCKED); // 18 - блокировка
-		} else {
-			lcd.showText(TXT_SEND_ERR);
-		}
+		lcd.showText(TXT_SEND_ERR);
 		break;
 	default:
 		lcd.showText((char *)MENU[curCmd].text);
@@ -647,17 +582,12 @@ static void rim_draw(void) {
 		lcd.text(HIDE, 1, S43);
 	}
 
-	// S46: пока блок не готов (нет M_READY) - мигает; готов - заряд
-	// конденсаторов
-	if (!(matrix & M_READY)) {
-		lcd.text(blink ? SHOW : HIDE, 1, S46);
-	} else {
-		lcd.text((matrix & M_CAP) ? SHOW : HIDE, 1, S46);
-	}
+	// S46: заряд конденсаторов
+	lcd.text((matrix & M_CAP) ? SHOW : HIDE, 1, S46);
 	// S50: блокировка
 	lcd.text((matrix & M_BLOCK) ? SHOW : HIDE, 1, S50);
-	// S39: авария (треугольник "!")
-	lcd.text(nAlarm ? SHOW : HIDE, 1, S39);
+	// S53: авария
+	lcd.text(alarm ? SHOW : HIDE, 1, S53);
 
 	// батарея и уровень сигнала
 	rim_show_batt(blink);
@@ -671,18 +601,11 @@ static void rim_draw(void) {
 		return;
 	}
 
-	// 8-15: код отказа при ОШИБКА; иначе все коды аварий в ряд; без аварии -
-	// пусто
-	if ((SEND_ERR == sendState) &&
-	    ((RIM_ERR_NOT_READY == lastErr) || (RIM_ERR_BLOCKED == lastErr))) {
-		// "НЕ ГОТ" / "БЛОК" - смысл уже в тексте на 1-6, цифровое поле гасим
-		for (u8 p = 8; p <= 15; p++) {
-			lcd.show_val_pos(SPACE, p);
-		}
-	} else if ((SEND_ERR == sendState) && lastErr) {
+	// 8-15: код отказа при ОШИБКА; иначе код аварии; без аварии - пусто
+	if ((SEND_ERR == sendState) && lastErr) {
 		lcd.show_long(lastErr, false, false, 0);
-	} else if (nAlarm) {
-		rim_show_alarm_row(alarmCodes, nAlarm); // все коды одновременно, в ряд
+	} else if (alarm) {
+		lcd.show_long(alarm, false, false, 0);
 	} else {
 		for (u8 p = 8; p <= 15; p++) {
 			lcd.show_val_pos(SPACE, p);
@@ -690,15 +613,21 @@ static void rim_draw(void) {
 	}
 
 	// 17-23: заводской номер, при аварии - мигает "Error"
-	if (nAlarm && blink) {
+	if (alarm && blink) {
 		rim_show_alarm_top();
 	} else {
 		rim_show_serial(serialBU);
 	}
 }
 //----------------------------------------------------------------------------//
+// Флаг запуска: ставит thread_main после первичной настройки
+// (номер пульта / счётчика / пин). До него поток не трогает ЖКИ
+// и не съедает сообщения кнопок у экрана ввода номера.
+volatile bool g_rim_enable = false;
+
 PT_THREAD(thread_rim_protocol(pt_t *pt)) {
 	PT_BEGIN(pt);
+	PT_WAIT_UNTIL(pt, g_rim_enable);
 	msg.set(MSG_BLOCK_STATUS_THREAD, NULL, 0); // штатный индикатор статуса гасим
 	while (1) {
 		//--- ЭКРАН 1: выбор пароля (до поиска устройства) -----------------//
@@ -728,22 +657,16 @@ PT_THREAD(thread_rim_protocol(pt_t *pt)) {
 		devSel = 0;
 		while (BLE_STATE_CONNECT != SystemInfo.BLE_State) {
 			// ЛЕВАЯ кнопка - листаем список найденных БУ
-			if (msg.getVal(MSG_SELECT_CMD)) {
+			if (msg.getVal(MSG_SELECT_CMD) && bleDevCnt) {
+				devSel = (u8)((devSel + 1) % bleDevCnt);
+				g_ble_fail = false;
 				tim.reset(TIMER_DISABLE); // активность: таймер отключения
-				                          // (сбрасываем в любом случае, даже
-				                          // если список ещё пуст)
-				if (bleDevCnt) {
-					devSel = (u8)((devSel + 1) % bleDevCnt);
-					g_ble_fail = false;
-				}
 			}
 			// ПРАВАЯ кнопка (удержание) - подключаемся к выбранному
-			if (msg.getVal(MSG_SEND_CMD)) {
+			if (msg.getVal(MSG_SEND_CMD) && bleDevCnt) {
+				app_ble_connect_to(devSel);
 				tim.reset(TIMER_DISABLE);
-				if (bleDevCnt) {
-					app_ble_connect_to(devSel);
-					_SYSLOG_("password ver");
-				}
+				_SYSLOG_("password ver");
 			}
 			// пока идёт попытка подключения - не даём пульту уснуть
 			if (g_connecting) {
