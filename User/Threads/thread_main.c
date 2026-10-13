@@ -10,9 +10,11 @@
 #include "memory.h"
 #include "math.h"
 
-// 1 = ˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜/˜˜˜˜˜˜˜˜/˜˜˜ (˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜)
-// 0 = ˜˜ ˜˜˜˜˜˜˜˜˜˜: ˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜ (RiM-˜˜˜˜˜)
+// 1 = ??? ?????? ?????? ?????????? ????? ??????/????????/??? (?????? ?????????)
+// 0 = ?? ??????????: ????? ???????? ??? ?????? (RiM-?????)
 #define ASK_CONFIG_ON_BOOT 0
+// 1 = show remote serial number on LCD at boot, 0 = skip this screen
+#define SHOW_SERIAL_ON_BOOT 0
 //----------------------------------------------------------------------------//
 #define e0 1U
 #define e1 10U
@@ -34,7 +36,7 @@ pt_t manualInput_pt;
 #define TIME_INPUT_BLINK_HIDE 300
 //----------------------------------------------------------------------------//
 void decomposeToArray(u32 number, u8 array[], u8 digits) {
-	// ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+	// ????????? ?????? ? ????? ? ??????
 	for (int i = digits - 1; i >= 0; i--) {
 		array[i] = number % 10;
 		number /= 10;
@@ -61,13 +63,13 @@ PT_THREAD(child_manualInput(pt_t *pt, u32 *pNumber, u8 numbOfDigits,
 	allDigitsFilled = 0;
 	exitPT = false;
 
-	// ˜˜˜˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜
+	// ?????????????? ??????? ????? ???????
 	for (u8 i = 0; i < sizeof(numArray); i++) {
 		numArray[i] = LINE;
 	}
 
 	for (u8 i = 0; i < sizeof(numArray); numArray[i++] = LINE)
-		; // ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ (LINE)
+		; // ????????? ?????? ??????? ?????????? (LINE)
 	if (pNumber && (*pNumber < (u32)pow(10, numbOfDigits))) {
 		decomposeToArray(*pNumber, numArray, numbOfDigits);
 	}
@@ -106,7 +108,7 @@ PT_THREAD(child_manualInput(pt_t *pt, u32 *pNumber, u8 numbOfDigits,
 				numArray[pos] = 0;
 			}
 			tim.reset(
-			    TIMER_CHILD); // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜
+			    TIMER_CHILD); // ?????????? ?????? ??????? ??? ????????? ?????
 			lcd.show_val_pos(numArray[pos], pos + 8);
 		}
 		if (msg.getVal(MSG_BTN_2_PUSH_SHORT) && (numArray[pos] != LINE)) {
@@ -118,14 +120,14 @@ PT_THREAD(child_manualInput(pt_t *pt, u32 *pNumber, u8 numbOfDigits,
 			tim.reset(TIMER_CHILD);
 		}
 
-		// ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜
+		// ????????? ??????? ???????
 		tmp = tim.get(TIMER_CHILD);
 		if (pos < numbOfDigits) {
 			if (tmp < TIME_INPUT_BLINK_SHOW) {
 				lcd.show_val_pos(numArray[pos], pos + 8);
-				// ˜˜˜˜˜˜ 2 ˜˜˜˜˜ - ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜
+				// ?????? 2 ????? - ?????????? ?????
 				if (msg.getVal(MSG_BTN_2_PUSH_MID)) {
-					allDigitsFilled = 1; // ˜˜˜˜˜˜˜˜˜ ˜˜˜ ˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
+					allDigitsFilled = 1; // ????????? ??? ??? ????? ?????????
 					for (u8 i = 0; i < numbOfDigits; i++) {
 						if (numArray[i] == LINE) {
 							allDigitsFilled = 0;
@@ -134,7 +136,7 @@ PT_THREAD(child_manualInput(pt_t *pt, u32 *pNumber, u8 numbOfDigits,
 					}
 					if (allDigitsFilled) {
 						if (fZeroOk) {
-							break; // ˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ - ˜˜˜˜˜˜˜
+							break; // ??? ????? ????????? - ???????
 						} else {
 							*pNumber = 0;
 							for (u8 i = 0; i < numbOfDigits; i++) {
@@ -147,7 +149,7 @@ PT_THREAD(child_manualInput(pt_t *pt, u32 *pNumber, u8 numbOfDigits,
 					}
 				}
 			} else if (tmp < TIME_INPUT_BLINK_HIDE) {
-				lcd.show_val_pos(SPACE, pos + 8); // ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜
+				lcd.show_val_pos(SPACE, pos + 8); // ???????? ??????
 			} else {
 				tim.reset(TIMER_CHILD);
 			}
@@ -162,7 +164,7 @@ PT_THREAD(child_manualInput(pt_t *pt, u32 *pNumber, u8 numbOfDigits,
 	PT_END(pt);
 }
 //----------------------------------------------------------------------------//
-void lcd_out(u8 dlmsElement) { // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜
+void lcd_out(u8 dlmsElement) { // ?????????? ??????
 	lcd.clear_OBIS_data();
 	lcd.text(HIDE, 19, k, PP1, PP2, PP2_1, PP3, PP4, PP4_1, PP5, PP6, PP6_1, PP7,
 	         COLON_1, COLON_2, V, t, A, r, h, Hz);
@@ -184,38 +186,38 @@ void lcd_out(u8 dlmsElement) { // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜
 	}
 }
 
-typedef struct {      // ˜˜˜˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜˜˜˜
-	u8 currentGroup;   // ˜˜˜˜˜˜˜ ˜˜˜˜˜˜
-	u8 currentElement; // ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
-	u8 firstElement;   // ˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
-	u8 lastElement;    // ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
-	u8 elementCount;   // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+typedef struct {      // ????????? ??? ?????????
+	u8 currentGroup;   // ??????? ??????
+	u8 currentElement; // ??????? ??????? ? ??????
+	u8 firstElement;   // ?????? ????????? ??????? ? ??????
+	u8 lastElement;    // ????????? ????????? ??????? ? ??????
+	u8 elementCount;   // ?????????? ????????? ????????? ? ??????
 } NavigationState_t;
 
 NavigationState_t nav = {0};
 
 u8 find_first_available_in_group(
-    u8 group) { // ˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+    u8 group) { // ????? ??????? ?????????? ???????? ? ??????
 	for (u8 i = 0; i < DLMS_MAX_OBJ; i++) {
 		if (dlms.obj[i].fShow && dlms.obj[i].pConst->group == group) {
 			return i;
 		}
 	}
-	return 0xFF; // ˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+	return 0xFF; // ??? ????????? ????????? ? ??????
 }
 
 u8 find_last_available_in_group(
-    u8 group) { // ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+    u8 group) { // ????? ?????????? ?????????? ???????? ? ??????
 	for (u8 i = DLMS_MAX_OBJ - 1; i > 0; i--) {
 		if (dlms.obj[i].fShow && dlms.obj[i].pConst->group == group) {
 			return i;
 		}
 	}
-	return 0xFF; // ˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+	return 0xFF; // ??? ????????? ????????? ? ??????
 }
 
 u8 count_available_in_group(
-    u8 group) { // ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+    u8 group) { // ??????? ?????????? ????????? ????????? ? ??????
 	u8 count = 0;
 	for (u8 i = 0; i < DLMS_MAX_OBJ; i++) {
 		if (dlms.obj[i].fShow && dlms.obj[i].pConst->group == group) {
@@ -225,13 +227,13 @@ u8 count_available_in_group(
 	return count;
 }
 
-void update_group_info(void) { // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜
+void update_group_info(void) { // ?????????? ?????????? ? ??????? ??????
 	nav.firstElement = find_first_available_in_group(nav.currentGroup);
 	nav.lastElement = find_last_available_in_group(nav.currentGroup);
 	nav.elementCount = count_available_in_group(nav.currentGroup);
 
-	// ˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜ ˜˜˜ ˜˜ ˜˜˜˜˜˜˜˜, ˜˜˜˜˜˜˜˜˜˜˜˜˜
-	// ˜˜˜˜˜˜
+	// ???? ??????? ??????? ?? ?????? ? ?????? ??? ?? ????????, ?????????????
+	// ??????
 	if (nav.elementCount > 0) {
 		if (!dlms.obj[nav.currentElement].fShow ||
 		    dlms.obj[nav.currentElement].pConst->group != nav.currentGroup) {
@@ -242,8 +244,8 @@ void update_group_info(void) { // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜
 	}
 }
 
-void init_navigation(void) { // ˜˜˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
-	// ˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜, ˜ ˜˜˜˜˜˜˜ ˜˜˜˜ ˜˜˜˜˜˜˜˜
+void init_navigation(void) { // ????????????? ?????????
+	// ???????? ? ?????? ??????, ? ??????? ???? ????????
 	for (u8 group = 1; group <= MAX_GROUP; group++) {
 		if (count_available_in_group(group) > 0) {
 			nav.currentGroup = group;
@@ -254,7 +256,7 @@ void init_navigation(void) { // ˜˜˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
 }
 
 u8 get_element_index_in_group(
-    void) { // ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜˜˜ (˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜ "X/Y")
+    void) { // ???????? ?????? ???????? ?????? ?????? (??? ??????????? "X/Y")
 	u8 index = 1;
 	for (u8 i = nav.firstElement; i < nav.currentElement; i++) {
 		if (dlms.obj[i].fShow && dlms.obj[i].pConst->group == nav.currentGroup) {
@@ -282,20 +284,20 @@ PT_THREAD(thread_main(pt_t *pt)) {
 	PT_WAIT_UNTIL(
 	    pt, ((V_BATT_STATUS_NONE != SystemInfo.status.vBatt) &&
 	         (MODE_NONE !=
-	          SystemInfo.status.manufactoryMode))); // ˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
+	          SystemInfo.status.manufactoryMode))); // ???? ????????? ?????????
 	_SYSLOG_("[SYSTEM] - Battary Voltage: %.3f V",
 	         ((float)(SystemInfo.Vcc.Batt) / 1000));
 	if ((V_BATT_STATUS_LOWER == SystemInfo.status.vBatt) &&
 	    (!SystemInfo.status.usbPwr) &&
 	    (MODE_OFF ==
 	     SystemInfo.status
-	         .manufactoryMode)) { // ˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜ ˜˜ ˜˜ USB
-		                           // ˜ ˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜
+	         .manufactoryMode)) { // ???? ????????? ????????? ? ??????? ?? ?? USB
+		                           // ? ?? ????? ??????????
 		PT_WAIT_UNTIL(pt, (IS_BUTTON_1_UNPRESSED &&
-		                   IS_BUTTON_2_UNPRESSED)); // ˜˜˜˜ ˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜
+		                   IS_BUTTON_2_UNPRESSED)); // ???? ???? ??????? ??????
 		PT_SPAWN(pt, &blinkingBatt_pt,
 		         thread_blinkingBatt(
-		             &blinkingBatt_pt)); // ˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ 10 ˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜˜
+		             &blinkingBatt_pt)); // ?????? ?????????? 10 ??? ? ???????????
 	}
 	tim.reset(TIMER_DELAY);
 	msg.set(MSG_BLOCK_STATUS_THREAD, NULL, 0);
@@ -305,21 +307,21 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.all();
 		}
 		if (msg.getVal(
-		        MSG_BTN_1_2_COMBINATION_MID)) { // ˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜ ˜˜˜˜ ˜˜˜˜˜˜˜˜˜
-			                                     // ˜˜˜˜˜˜, ˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜
-			                                     // ˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
+		        MSG_BTN_1_2_COMBINATION_MID)) { // ???? ??? ?????? ???? ?????????
+			                                     // ??????, ?? ?????????? ????
+			                                     // ?????? ?????????
 			showDiag = true;
 		}
 		PT_YIELD(pt);
 	} while (IS_BUTTON_1_PRESSED &&
-	         IS_BUTTON_2_PRESSED); // ˜˜˜˜ ˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜
+	         IS_BUTTON_2_PRESSED); // ???? ???? ???????? ??????
 	clearBtnMsg();
 
 	if (settingMode || showDiag ||
-	    (MODE_ON == SystemInfo.status.manufactoryMode)) { // ˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
-		                                                   // ˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜ ˜˜˜
-		                                                   // ˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜
-		lcd.all(); // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜˜
+	    (MODE_ON == SystemInfo.status.manufactoryMode)) { // ???? ????? ?????????
+		                                                   // ??? ??????????? ???
+		                                                   // ???????? ?????????
+		lcd.all(); // ?????????? ??? ???????
 		PT_DELAY_MS(TIMER_DELAY, WAIT_TIME);
 		lcd.clear();
 		PT_DELAY_MS(TIMER_DELAY, WAIT_TIME / 4);
@@ -328,9 +330,9 @@ PT_THREAD(thread_main(pt_t *pt)) {
 	if (settingMode || showDiag) {
 		tmp1 = (FW_VERSION_MAJOR * 1000000) + (FW_VERSION_MINOR * 10000) +
 		       (FW_VERSION_PATCH * 100) + FW_VERSION_BUILD;
-		lcd.show_long(tmp1, false, false, 2); // ˜˜˜˜˜ ˜˜˜˜˜˜˜˜
+		lcd.show_long(tmp1, false, false, 2); // ????? ????????
 		lcd.text(SHOW, 3, PP2, PP4, PP6);
-		lcd.showText("˜˜ ˜˜");
+		lcd.showText("?? ??");
 		if (strcmp(FW_VERSION_PRERELEASE, "-a") == 0) {
 			lcd.show_val_pos(CHAR_A, 17);
 			lcd.show_val_pos(CHAR_L, 18);
@@ -355,8 +357,8 @@ PT_THREAD(thread_main(pt_t *pt)) {
 	if (ASK_CONFIG_ON_BOOT &&
 	    ((0 == SystemInfo.serialNumber) ||
 	     (SystemInfo.serialNumber >=
-	      100000000))) { // ˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜ 0, ˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜ ˜˜˜˜˜
-		lcd.showText("˜O˜ ˜˜");
+	      100000000))) { // ???? ????? ?????? 0, ?? ?????? ? ????? ?????
+		lcd.showText("?O? ??");
 		lcd.text(SHOW, 1, CP3);
 		PT_DELAY_MS(TIMER_DELAY, 500);
 		tmp1 = SystemInfo.serialNumber;
@@ -369,7 +371,7 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.showText("MEMERR");
 			lcd.text(SHOW, 1, CP3);
 			PT_SPAWN(pt, &blinkingLines_pt,
-			         thread_blinkingLines(&blinkingLines_pt)); // ˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+			         thread_blinkingLines(&blinkingLines_pt)); // ?? ???????????
 		}
 		if (RESULT_ERROR == memory.readTwoCopyesWithCRC(
 		                        MEMORY_SERIAL_NUMBER, &SystemInfo.serialNumber,
@@ -378,16 +380,16 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.showText("MEMERR");
 			lcd.text(SHOW, 1, CP3);
 			PT_SPAWN(pt, &blinkingLines_pt,
-			         thread_blinkingLines(&blinkingLines_pt)); // ˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+			         thread_blinkingLines(&blinkingLines_pt)); // ?? ???????????
 		}
 		_SYSLOG_("Config - Save Number Pult: %u", SystemInfo.serialNumber);
 	}
-	if ((0 != SystemInfo.serialNumber) &&
-	    (SystemInfo.serialNumber < 100000000)) { // ˜˜˜˜˜ ˜˜˜˜ - ˜˜˜˜˜˜˜˜˜˜
-		lcd.showText("˜O˜ ˜˜");
+	if (SHOW_SERIAL_ON_BOOT && (0 != SystemInfo.serialNumber) &&
+	    (SystemInfo.serialNumber < 100000000)) { // ????? ???? - ??????????
+		lcd.showText("?O? ??");
 		lcd.text(SHOW, 1, CP3);
 		lcd.show_long(SystemInfo.serialNumber, true, false,
-		              0); // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜
+		              0); // ?????????? ????? ??????
 		PT_DELAY_MS(TIMER_DELAY, WAIT_TIME);
 		lcd.clear();
 		PT_DELAY_MS(TIMER_DELAY, WAIT_TIME / 4);
@@ -398,8 +400,8 @@ PT_THREAD(thread_main(pt_t *pt)) {
 	    (settingMode || (0 == SystemInfo.numMeter) ||
 	     (SystemInfo.numMeter >= 100000000) ||
 	     (SystemInfo.pinCode >=
-	      1000000))) { // ˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜˜˜˜˜ 0
-		lcd.showText("˜O˜ ˜˜");
+	      1000000))) { // ???? ????? ????????? ??? ????? ???????? ????? 0
+		lcd.showText("?O? ??");
 		lcd.text(SHOW, 1, CP3);
 		_SYSLOG_("Config - Manual Input Meter Number");
 		PT_DELAY_MS(TIMER_DELAY, 500);
@@ -413,7 +415,7 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.showText("MEMERR");
 			lcd.text(SHOW, 1, CP3);
 			PT_SPAWN(pt, &blinkingLines_pt,
-			         thread_blinkingLines(&blinkingLines_pt)); // ˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+			         thread_blinkingLines(&blinkingLines_pt)); // ?? ???????????
 		}
 		if (RESULT_ERROR ==
 		    memory.readTwoCopyesWithCRC(MEMORY_METER_NUMBER, &SystemInfo.numMeter,
@@ -422,7 +424,7 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.showText("MEMERR");
 			lcd.text(SHOW, 1, CP3);
 			PT_SPAWN(pt, &blinkingLines_pt,
-			         thread_blinkingLines(&blinkingLines_pt)); // ˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+			         thread_blinkingLines(&blinkingLines_pt)); // ?? ???????????
 		}
 		_SYSLOG_("Config - Save Number Pult: %u", SystemInfo.numMeter);
 
@@ -432,7 +434,7 @@ PT_THREAD(thread_main(pt_t *pt)) {
 		lcd.clear();
 		PT_DELAY_MS(TIMER_DELAY, 250);
 
-		lcd.showText("˜˜˜˜˜˜");
+		lcd.showText("??????");
 		_SYSLOG_("Config - Manual Input Meter Number");
 		PT_DELAY_MS(TIMER_DELAY, 250);
 		tmp1 = SystemInfo.pinCode;
@@ -445,7 +447,7 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.showText("MEMERR");
 			lcd.text(SHOW, 1, CP3);
 			PT_SPAWN(pt, &blinkingLines_pt,
-			         thread_blinkingLines(&blinkingLines_pt)); // ˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+			         thread_blinkingLines(&blinkingLines_pt)); // ?? ???????????
 		}
 		if (RESULT_ERROR ==
 		    memory.readTwoCopyesWithCRC(MEMORY_PINCODE, &SystemInfo.pinCode,
@@ -454,18 +456,18 @@ PT_THREAD(thread_main(pt_t *pt)) {
 			lcd.showText("MEMERR");
 			lcd.text(SHOW, 1, CP3);
 			PT_SPAWN(pt, &blinkingLines_pt,
-			         thread_blinkingLines(&blinkingLines_pt)); // ˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+			         thread_blinkingLines(&blinkingLines_pt)); // ?? ???????????
 		}
 		_SYSLOG_("Config - Save PinCode: %u", SystemInfo.pinCode);
 		PT_DELAY_MS(TIMER_DELAY, 1000);
 		lcd.clear();
 		PT_DELAY_MS(TIMER_DELAY, 250);
 	}
-	// ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜˜ BLE
-	g_rim_enable = true; // ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ - ˜˜˜˜˜˜˜˜˜ thread_rim_protocol
+	// ????? ????????? ? ??????????? BLE
+	g_rim_enable = true; // ????????? ????????? - ????????? thread_rim_protocol
 	msg.set(MSG_BLE_START, NULL, 0);
 	tim.reset(TIMER_DELAY);
-	lcd.showText("˜˜˜˜˜ ");
+	lcd.showText("????? ");
 	static u8 cnt = 0;
 	do {
 		tim.reset(TIMER_RSSI);
@@ -481,7 +483,7 @@ PT_THREAD(thread_main(pt_t *pt)) {
 				if (cnt >= 10) {
 					rssiBLE = -100;
 					lcd.clear();
-					lcd.showText("˜˜˜ ˜˜");
+					lcd.showText("??? ??");
 					PT_SPAWN(pt, &blinkingLines_pt,
 					         thread_blinkingLines(&blinkingLines_pt));
 				}
@@ -495,22 +497,22 @@ PT_THREAD(thread_main(pt_t *pt)) {
 	} while (1);
 	lcd.clear();
 	msg.set(MSG_PULT_CONNECT_TO_METER, NULL, 0);
-	// thread_rim_protocol ˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜.
-	// ˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜ (˜˜ ˜˜˜˜˜ MSG_BTN, ˜˜ ˜˜˜˜˜˜ ˜˜˜ ˜˜).
+	// thread_rim_protocol ?????? ??????? ???????? ? ????????.
+	// ??? ??????????? ? ?????? ? ?????? (?? ????? MSG_BTN, ?? ?????? ??? ??).
 	PT_WAIT_UNTIL(pt, BLE_STATE_CONNECT != SystemInfo.BLE_State);
 
-	// (˜˜˜˜˜˜: ˜˜˜˜˜ MSG_BTN ˜ thread_rim_protocol)
+	// (??????: ????? MSG_BTN ? thread_rim_protocol)
 
 	lcd.show_long(SystemInfo.numMeter, true, false,
-	              0); // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜˜˜˜˜˜˜
-	lcd.showText("˜O˜ ˜˜");
+	              0); // ?????????? ????? ????????
+	lcd.showText("?O? ??");
 	lcd.text(SHOW, 1, CP3);
 
 	do {
-		if (msg.getVal(MSG_NO_ANSWER)) { // ˜˜˜ ˜˜˜˜˜˜
+		if (msg.getVal(MSG_NO_ANSWER)) { // ??? ??????
 			lcd.clear();
 			lcd.text(SHOW, 1, CP3);
-			lcd.showText("˜˜˜˜˜˜");
+			lcd.showText("??????");
 			PT_SPAWN(pt, &blinkingLines_pt,
 			         thread_blinkingLines(&blinkingLines_pt));
 		}
@@ -534,43 +536,43 @@ PT_THREAD(thread_main(pt_t *pt)) {
 		}
 
 		if (msg.getVal(MSG_BTN_2_PUSH_SHORT)) {
-			if (nav.elementCount) {          // ˜˜˜˜ ˜˜˜˜˜˜˜˜
-				u8 next = nav.currentElement; // ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜
-				                              // ˜˜˜˜˜˜˜˜
+			if (nav.elementCount) {          // ???? ????????
+				u8 next = nav.currentElement; // ????? ?????????? ??????????
+				                              // ????????
 				do {
 					next++;
 					if (next >= DLMS_MAX_OBJ) {
 						next = 0;
 					}
 
-					// ˜˜˜˜˜˜˜˜˜, ˜˜˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜ ˜˜
+					// ?????????, ??????????? ?? ??????? ??????? ?????? ? ???????? ??
 					if (dlms.obj[next].fShow &&
 					    dlms.obj[next].pConst->group == nav.currentGroup) {
 						nav.currentElement = next;
 						break;
 					}
-				} while (next != nav.currentElement); // ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+				} while (next != nav.currentElement); // ????????? ? ??????
 				_SYSLOG_("Navigation: Group %d, Element %d/%d", nav.currentGroup,
 				         get_element_index_in_group(), nav.elementCount);
 			}
 		}
 		if (msg.getVal(MSG_BTN_1_PUSH_SHORT)) {
-			if (nav.elementCount) { // ˜˜˜˜ ˜˜˜˜˜˜˜˜
+			if (nav.elementCount) { // ???? ????????
 				u8 previous =
-				    nav.currentElement; // ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜
+				    nav.currentElement; // ????? ?????????? ?????????? ????????
 				do {
 					previous--;
 					if (previous > DLMS_MAX_OBJ) {
 						previous = DLMS_MAX_OBJ - 1;
 					}
 
-					// ˜˜˜˜˜˜˜˜˜, ˜˜˜˜˜˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜ ˜˜
+					// ?????????, ??????????? ?? ??????? ??????? ?????? ? ???????? ??
 					if (dlms.obj[previous].fShow &&
 					    dlms.obj[previous].pConst->group == nav.currentGroup) {
 						nav.currentElement = previous;
 						break;
 					}
-				} while (previous != nav.currentElement); // ˜˜˜˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜
+				} while (previous != nav.currentElement); // ????????? ? ??????
 				_SYSLOG_("Navigation: Group %d, Element %d/%d", nav.currentGroup,
 				         get_element_index_in_group(), nav.elementCount);
 			}
@@ -578,14 +580,14 @@ PT_THREAD(thread_main(pt_t *pt)) {
 
 		if (msg.getVal(MSG_BTN_2_PUSH_MID)) {
 			u8 startGroup = nav.currentGroup;
-			do { // ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜
+			do { // ????? ????????? ?????? ? ?????????? ??????????
 				nav.currentGroup++;
 				if (nav.currentGroup > MAX_GROUP) {
-					nav.currentGroup = 1; // ˜˜˜˜˜˜˜˜˜˜˜
+					nav.currentGroup = 1; // ???????????
 				}
 
 				u8 firstInGroup = find_first_available_in_group(nav.currentGroup);
-				if (firstInGroup != 0xFF) { // ˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜
+				if (firstInGroup != 0xFF) { // ????? ?????? ? ??????????
 					update_group_info();
 					nav.currentElement = nav.firstElement;
 
@@ -593,21 +595,21 @@ PT_THREAD(thread_main(pt_t *pt)) {
 					         nav.currentGroup, nav.elementCount);
 					break;
 				}
-			} while (nav.currentGroup != startGroup); // ˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜
+			} while (nav.currentGroup != startGroup); // ?????? ??? ??????
 
 			_SYSLOG_("Navigation: No other groups with available elements");
 		}
 
 		if (msg.getVal(MSG_BTN_1_PUSH_MID)) {
 			u8 startGroup = nav.currentGroup;
-			do { // ˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜
+			do { // ????? ????????? ?????? ? ?????????? ??????????
 				nav.currentGroup--;
 				if (nav.currentGroup == 0) {
-					nav.currentGroup = MAX_GROUP; // ˜˜˜˜˜˜˜˜˜˜˜
+					nav.currentGroup = MAX_GROUP; // ???????????
 				}
 
 				u8 firstInGroup = find_first_available_in_group(nav.currentGroup);
-				if (firstInGroup != 0xFF) { // ˜˜˜˜˜ ˜˜˜˜˜˜ ˜ ˜˜˜˜˜˜˜˜˜˜
+				if (firstInGroup != 0xFF) { // ????? ?????? ? ??????????
 					update_group_info();
 					nav.currentElement = nav.firstElement;
 
@@ -615,12 +617,12 @@ PT_THREAD(thread_main(pt_t *pt)) {
 					         nav.currentGroup, nav.elementCount);
 					break;
 				}
-			} while (nav.currentGroup != startGroup); // ˜˜˜˜˜˜ ˜˜˜ ˜˜˜˜˜˜
+			} while (nav.currentGroup != startGroup); // ?????? ??? ??????
 
 			_SYSLOG_("Navigation: No other groups with available elements");
 		}
 
-		if (DLMS_LCD_DIAG == nav.currentElement) { // ˜˜˜˜ ˜˜˜˜˜˜˜˜˜˜˜
+		if (DLMS_LCD_DIAG == nav.currentElement) { // ???? ???????????
 			msg.set(MSG_SWITCH_BLOCK_STATUS_THREAD, NULL, 0);
 			do {
 				PT_WAIT_UNTIL(pt, IS_BUTTON_1_UNPRESSED && IS_BUTTON_2_UNPRESSED);
@@ -662,31 +664,31 @@ PT_THREAD(thread_main(pt_t *pt)) {
 		if (fProcessConnectRelay) {
 			tim.reset(TIMER_DISABLE);
 			if (66 == timerConnectRelay) {
-				lcd.showText("˜˜˜˜˜˜");
+				lcd.showText("??????");
 			} else if (65 == timerConnectRelay) {
 				fProcessConnectRelay = false;
 				lcd.showText("      ");
 			} else if (63 == timerConnectRelay) {
-				lcd.showText("˜˜˜˜  ");
+				lcd.showText("????  ");
 			} else if (62 == timerConnectRelay) {
-				lcd.showText("˜˜˜˜˜ ");
+				lcd.showText("????? ");
 			} else if (61 == timerConnectRelay) {
-				lcd.showText("˜˜˜˜˜ ");
-			} else if (timerConnectRelay >= 0) { // ˜˜˜˜ ˜˜˜˜˜˜ ˜˜ ˜˜˜˜˜, ˜˜
-				                                  // ˜˜˜˜˜˜˜˜˜˜ ˜˜˜˜˜ ˜˜ ˜˜˜˜˜˜˜˜˜
-				snprintf(str, 7, "˜˜˜ %02d˜", timerConnectRelay);
+				lcd.showText("????? ");
+			} else if (timerConnectRelay >= 0) { // ???? ?????? ?? ?????, ??
+				                                  // ?????????? ????? ?? ?????????
+				snprintf(str, 7, "??? %02d?", timerConnectRelay);
 				lcd.text(SHOW, 1, CP3);
 				lcd.showText(str);
 			} else if (0 > timerConnectRelay) {
 				lcd.text(HIDE, 1, CP3);
 				if (relayConnectResult == 0) {
-					lcd.showText("˜˜˜˜  ");
+					lcd.showText("????  ");
 					lcd.text(SHOW, 2, CP4, CP5);
 				} else if (relayConnectResult == 1) {
-					lcd.showText("˜˜˜˜˜˜");
+					lcd.showText("??????");
 					lcd.text(HIDE, 2, CP4, CP5);
 				} else if (relayConnectResult == 2) {
-					lcd.showText("˜˜˜˜˜ ");
+					lcd.showText("????? ");
 					lcd.text(HIDE, 2, CP4, CP5);
 				}
 				if (relayConnectResult && (timerConnectRelay < -4)) {
