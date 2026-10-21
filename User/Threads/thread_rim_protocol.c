@@ -10,11 +10,10 @@
 // Разметка ЖКИ:
 //   1-6    - текст команды; при отправке: ОТПР. -> УСПЕХ / ОШИБКА
 //   8-15   - код аварии (пусто = нет), при ОШИБКА - код отказа
-//   17-23  - заводской номер блока; при аварии - "ErrOr" (мигает)
-//   S39    - состояние ВВ: горит = включён (ВКЛ), мигает = идёт операция
-//   S46    - заряд конденсаторов
-//   S50    - блокировка
-//   S53    - авария
+//   17-23  - серийный номер подключённого БУ (из имени BLE); при аварии -
+//   "ErrOr" (мигает) S39    - состояние ВВ: горит = включён (ВКЛ), мигает =
+//   идёт операция S46    - заряд конденсаторов S50    - блокировка S53    -
+//   авария
 //----------------------------------------------------------------------------//
 #include "threads.h"
 #include "messages.h"
@@ -93,6 +92,10 @@ extern bool g_connecting;     // идёт попытка подключения 
 #define TXT_SEND_ERR "\xCE\xD8\xC8\xC1\xCA\xC0" // "ОШИБКА" - отказ/нет ответа
 //----------------------------------------------------------------------------//
 static u8 devSel = 0; // выбранное устройство в списке
+//  Имя BLE-устройства, к которому подключаемся ("RiM_BY61_1234567").
+//  Копируется при нажатии "подключить": после разрыва список bleDevList
+//  очищается, а номер должен оставаться на экране всё время связи.
+static char connName[BLE_DEV_NAME_LEN] = {0};
 //----------------------------------------------------------------------------//
 //  Меню команд (текст в CP1251, ровно 6 символов)
 //----------------------------------------------------------------------------//
@@ -396,8 +399,10 @@ static void rim_show_batt(bool blink) {
 }
 //----------------------------------------------------------------------------//
 //  Вывод части серийника после последнего '_' ("RiM_BY61_0000000" -> "0000000")
+//  на разряды from..to с выравниванием вправо. Если хвост длиннее поля -
+//  показываются последние (to - from + 1) символов. Не цифры - прочерком.
 //----------------------------------------------------------------------------//
-static void rim_show_dev_name(const char *name) {
+static void rim_show_name_tail(const char *name, u8 from, u8 to) {
 	const char *tail = name;
 	for (const char *p = name; *p; p++) {
 		if ('_' == *p) {
@@ -405,14 +410,15 @@ static void rim_show_dev_name(const char *name) {
 		}
 	}
 
-	u8 len = 0;
-	while (tail[len] && (len < 8)) {
-		len++;
+	const u8 width = (u8)(to - from + 1);
+	u8 len = (u8)strlen(tail);
+	if (len > width) {
+		tail += (len - width); // берём младшие разряды
+		len = width;
 	}
 
-	// выравнивание вправо на разрядах 8..15
-	for (s8 pos = 15; pos >= 8; pos--) {
-		s8 idx = (s8)(len - 1 - (15 - pos));
+	for (s8 pos = (s8)to; pos >= (s8)from; pos--) {
+		s8 idx = (s8)(len - 1 - ((s8)to - pos));
 		if (idx < 0) {
 			lcd.show_val_pos(SPACE, (u8)pos);
 		} else if ((tail[idx] >= '0') && (tail[idx] <= '9')) {
@@ -421,6 +427,10 @@ static void rim_show_dev_name(const char *name) {
 			lcd.show_val_pos(LINE, (u8)pos);
 		}
 	}
+}
+
+static void rim_show_dev_name(const char *name) {
+	rim_show_name_tail(name, 8, 15);
 }
 //----------------------------------------------------------------------------//
 //  Экран поиска: "КОЛ У<n>" слева, серийник выбранного БУ на 8-15,
@@ -612,9 +622,12 @@ static void rim_draw(void) {
 		}
 	}
 
-	// 17-23: заводской номер, при аварии - мигает "Error"
+	// 17-23: серийный номер подключённого устройства (из имени BLE),
+	// при аварии - мигает "Error". Если имя неизвестно - номер из 0x41.
 	if (alarm && blink) {
 		rim_show_alarm_top();
+	} else if (connName[0]) {
+		rim_show_name_tail(connName, 17, 23);
 	} else {
 		rim_show_serial(serialBU);
 	}
@@ -664,6 +677,8 @@ PT_THREAD(thread_rim_protocol(pt_t *pt)) {
 			}
 			// ПРАВАЯ кнопка (удержание) - подключаемся к выбранному
 			if (msg.getVal(MSG_SEND_CMD) && bleDevCnt) {
+				memcpy(connName, bleDevList[devSel].name, BLE_DEV_NAME_LEN);
+				connName[BLE_DEV_NAME_LEN - 1] = 0;
 				app_ble_connect_to(devSel);
 				tim.reset(TIMER_DISABLE);
 				_SYSLOG_("password ver");
@@ -761,6 +776,8 @@ PT_THREAD(thread_rim_protocol(pt_t *pt)) {
 			PT_YIELD(pt);
 		}
 		lcd.clear();
+		connName[0] = 0; // связь разорвана - номер больше не актуален
+		serialBU = 0;
 		tim.reset(TIMER_DISABLE); // после разрыва отсчёт бездействия заново
 	}
 	PT_END(pt);
