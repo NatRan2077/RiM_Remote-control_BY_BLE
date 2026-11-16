@@ -1,10 +1,10 @@
 //----------------------------------------------------------------------------//
 #define FW_VERSION_MAJOR 1 // меняется при изменении схемотехники
 #define FW_VERSION_MINOR 1 // меняется при изменении функционала
-#define FW_VERSION_PATCH 4 // текущая версия
+#define FW_VERSION_PATCH 1 // текущая версия
 #define FW_VERSION_PRERELEASE                                                  \
 	"" // флаги (-a(alpha), -b(beta), -rc(release condidate))
-#define FW_VERSION_BUILD 1 // сборка
+#define FW_VERSION_BUILD 0 // сборка
 
 #define STRINGIFY(x) #x
 #define EXPAND_AND_STRINGIFY(x) STRINGIFY(x)

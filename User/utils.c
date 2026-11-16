@@ -26,10 +26,10 @@ void remap_vector_table(void) {
 	__set_PRIMASK(0);
 }
 //----------------------------------------------------------------------------//
-void SupplyEn(void) { // Включение питания
+void SupplyEn(void) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	GPIO_InitType GPIO_InitStruct;
 
-	volatile u32 i = 100000; // Задержка для исключения неправильного включения
+	volatile u32 i = 100000; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	while (i--)
 		;
 
@@ -48,11 +48,11 @@ void SupplyEn(void) { // Включение питания
 	SystemInfo.flag.logOn = true;
 }
 //----------------------------------------------------------------------------//
-void SupplyDis(void) { // Выключение питания
+void SupplyDis(void) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	GPIO_ResetBits(POWER_GPIO, POWER_PIN);
 }
 //----------------------------------------------------------------------------//
-static void IWDG_Init(void) { // Настройка WatchDog
+static void IWDG_Init(void) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ WatchDog
 #if IWDG_ON == 1
 	IWDG_WriteConfig(IWDG_WRITE_ENABLE);
 	IWDG_SetPrescalerDiv(IWDG_PRESCALER_DIV32);
@@ -66,21 +66,21 @@ static void IWDG_Init(void) { // Настройка WatchDog
 #endif
 }
 //----------------------------------------------------------------------------//
-void IWDG_Refresh(void) { // Сброс IWDG
+void IWDG_Refresh(void) { // пїЅпїЅпїЅпїЅпїЅ IWDG
 	IWDG_ReloadKey();
 }
 //----------------------------------------------------------------------------//
 #define MODEL_ID_DEVICE_STR_LEN_MAX 10 + 1
 #define FIRMWARE_VERSION_STR_LEN 17
 const char STR_MODEL_ID_DEVICE[MODEL_ID_DEVICE_STR_LEN_MAX] =
-    "RiM 040.40"; // Тип модуля (идентификатор)
+    "RIM_PDY_VV"; // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
 static const u32 FIRMWARE_ID = 0x01404000;
 const char STR_FIRMWARE_VERSION[FIRMWARE_VERSION_STR_LEN] = FW_VERSION;
 
-void Init_Core(void) { // Инициализация основных модулей
-	IWDG_Init();        // Настройка WatchDog
+void Init_Core(void) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+	IWDG_Init();        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ WatchDog
 	tim.init();
-	if (false == memory.init()) { // Инициализация flash-памяти
+	if (false == memory.init()) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ flash-пїЅпїЅпїЅпїЅпїЅпїЅ
 		_SYSLOG_("UNKNOWN MEMORY!!!");
 	}
 	SystemInfo.str.modelIdDevice = STR_MODEL_ID_DEVICE;
@@ -90,10 +90,10 @@ void Init_Core(void) { // Инициализация основных модулей
 
 //----------------------------------------------------------------------------//
 void ReadSystemInfoAndSettings(
-    void) { // Считываем системную инфромацию и настройки
+    void) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	char md5_calc[MD5_STR_LEN];
 
-	SystemInfo.firmwareID = (u32 *)&FIRMWARE_ID; // Индентификатор ПО
+	SystemInfo.firmwareID = (u32 *)&FIRMWARE_ID; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ
 	SystemInfo.str.modelIdDevice = STR_MODEL_ID_DEVICE;
 	SystemInfo.str.firmwareVersion = STR_FIRMWARE_VERSION;
 
@@ -152,11 +152,11 @@ void ReadSystemInfoAndSettings(
 	}
 
 	_SYSLOG_("**********************");
-	_SYSLOG_("----- RiM 040.40 -----");
+	_SYSLOG_("----- RIM_PDY_VV -----");
 	_SYSLOG_("Firmware version: %s", SystemInfo.str.firmwareVersion);
 	_SYSLOG_("Number: %u", SystemInfo.serialNumber);
 	_SYSLOG_("Type: %s", SystemInfo.str.modelIdDevice);
-	//	_SYSLOG_("MD5: %s", MD5_Str);
+	_SYSLOG_("MD5: %s", MD5_Str);
 
 	memory.readTwoCopyesWithCRC(MEMORY_OPERATING_TIME,
 	                            &SystemInfo.cnt.operatingTime,
@@ -167,7 +167,7 @@ void ReadSystemInfoAndSettings(
 	memory.readTwoCopyesWithCRC(MEMORY_CNT_STARTS, &SystemInfo.cnt.starts,
 	                            sizeof(SystemInfo.cnt.starts));
 
-	SystemInfo.cnt.starts++; // увеличиваем счетчик включений
+	SystemInfo.cnt.starts++; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	Memory_Write_And_Update_Status(MEMORY_CNT_STARTS, &SystemInfo.cnt.starts,
 	                               sizeof(SystemInfo.cnt.starts));
 
@@ -180,7 +180,7 @@ void ReadSystemInfoAndSettings(
 	_SYSLOG_("**********************");
 }
 //----------------------------------------------------------------------------//
-void Threads_Init(void) { // Инициализация потоков
+void Threads_Init(void) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	PT_INIT(&lcd_pt);
 	PT_INIT(&btn_pt);
 	PT_INIT(&main_pt);
@@ -193,7 +193,7 @@ void Threads_Init(void) { // Инициализация потоков
 result_t Memory_Write_And_Update_Status(u32 page, void *const buffer_ptr,
                                         u8 len) {
 	if (RESULT_ERROR == memory.writeTwoCopyesWithCRC(page, buffer_ptr, len)) {
-		// Добавить запись в журнал
+		// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 		return RESULT_ERROR;
 	} else {
 		return RESULT_SUCCESS;
@@ -201,25 +201,25 @@ result_t Memory_Write_And_Update_Status(u32 page, void *const buffer_ptr,
 }
 //----------------------------------------------------------------------------//
 //----------------------------------------------------------------------------//
-void Clear_Buffer(u8 *buff, u16 size) { // Заполнить буфер нулями
+void Clear_Buffer(u8 *buff, u16 size) { // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	memset(buff, 0, size);
 }
 
 // char tmpBuf[100];
 ////----------------------------------------------------------------------------//
 // void SysLogSend(char* str){
-//	if(1 == PMU_GetModeStatus()){	//Отправляем только в нормальном режиме
+//	if(1 == PMU_GetModeStatus()){	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 //		u8 len = strlen(str);
 //		for(u8 i = 0; i < len; i++){
 //			UART4->DATA = str[i];
-//			while(0 == UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//ожидаем
-// передачи байта 			UART_ClearFlag(UART4, UART_INTSTS_TXDONE);
+//			while(0 == UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ 			UART_ClearFlag(UART4, UART_INTSTS_TXDONE);
 //		}
 //		UART4->DATA = '\r';
-//		while(0 == UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//ожидаем передачи
-// байта 		UART_ClearFlag(UART4, UART_INTSTS_TXDONE); 		UART4->DATA =
+//		while(0 == UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+// пїЅпїЅпїЅпїЅпїЅ 		UART_ClearFlag(UART4, UART_INTSTS_TXDONE); 		UART4->DATA =
 // '\n'; 		while(0
-//== UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//ожидаем передачи байта
+//== UART_GetFlag(UART4, UART_INTSTS_TXDONE));	//пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 //		UART_ClearFlag(UART4, UART_INTSTS_TXDONE);
 //		u32 tt = 100000;
 //		while(tt--);

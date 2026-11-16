@@ -617,19 +617,19 @@ Image Symbol Table
     .constdata                               0x01005dc8   Section      956  lcd.o(.constdata)
     .constdata                               0x01006184   Section       32  memory.o(.constdata)
     .conststring                             0x010061a4   Section       70  cmt453x_usart.o(.conststring)
-    .data                                    0x20004000   Section        4  system_cmt453x.o(.data)
-    .data                                    0x20004004   Section       12  cmt453x_qflash.o(.data)
-    .data                                    0x20004010   Section        8  lcd.o(.data)
-    I2CTimeout                               0x20004010   Data           4  lcd.o(.data)
-    .data                                    0x20004018   Section        8  memory.o(.data)
-    .data                                    0x20004020   Section       64  md5.o(.data)
-    .bss                                     0x20004060   Section       52  system_cmt453x.o(.bss)
-    .bss                                     0x20004094   Section      808  cmt453x_qflash.o(.bss)
-    ram_qflash_cmd                           0x20004094   Data         808  cmt453x_qflash.o(.bss)
-    .bss                                     0x200043bc   Section     1300  usb_driver.o(.bss)
-    .bss                                     0x200048d0   Section       71  lcd.o(.bss)
-    .bss                                     0x20004918   Section       88  md5.o(.bss)
-    STACK                                    0x20004970   Section     3072  startup_cmt453x.o(STACK)
+    .data                                    0x20000000   Section        4  system_cmt453x.o(.data)
+    .data                                    0x20000004   Section       12  cmt453x_qflash.o(.data)
+    .data                                    0x20000010   Section        8  lcd.o(.data)
+    I2CTimeout                               0x20000010   Data           4  lcd.o(.data)
+    .data                                    0x20000018   Section        8  memory.o(.data)
+    .data                                    0x20000020   Section       64  md5.o(.data)
+    .bss                                     0x20000060   Section       52  system_cmt453x.o(.bss)
+    .bss                                     0x20000094   Section      808  cmt453x_qflash.o(.bss)
+    ram_qflash_cmd                           0x20000094   Data         808  cmt453x_qflash.o(.bss)
+    .bss                                     0x200003bc   Section     1300  usb_driver.o(.bss)
+    .bss                                     0x200008d0   Section       71  lcd.o(.bss)
+    .bss                                     0x20000918   Section       88  md5.o(.bss)
+    STACK                                    0x20000970   Section     3072  startup_cmt453x.o(STACK)
 
     Global Symbols
 
@@ -870,20 +870,20 @@ Image Symbol Table
     memory                                   0x01006184   Data          32  memory.o(.constdata)
     Region$$Table$$Base                      0x010061ec   Number         0  anon$$obj.o(Region$$Table)
     Region$$Table$$Limit                     0x0100620c   Number         0  anon$$obj.o(Region$$Table)
-    SystemCoreClock                          0x20004000   Data           4  system_cmt453x.o(.data)
-    CMD_FLASH_SE                             0x20004004   Data           4  cmt453x_qflash.o(.data)
-    CMD_FLASH_WRITE                          0x20004008   Data           4  cmt453x_qflash.o(.data)
-    CMD_FLASH_READ                           0x2000400c   Data           4  cmt453x_qflash.o(.data)
-    upd                                      0x20004014   Data           4  lcd.o(.data)
-    memoryData                               0x20004018   Data           8  memory.o(.data)
-    PADDING                                  0x20004020   Data          64  md5.o(.data)
-    trim_stored                              0x20004060   Data          52  system_cmt453x.o(.bss)
-    usbData                                  0x200043bc   Data        1044  usb_driver.o(.bss)
-    str_tmp                                  0x200047d0   Data         256  usb_driver.o(.bss)
-    lcdBuff_Current                          0x200048d0   Data          36  lcd.o(.bss)
-    lcdBuff_New                              0x200048f4   Data          35  lcd.o(.bss)
-    md5_Context                              0x20004918   Data          88  md5.o(.bss)
-    __initial_sp                             0x20005570   Data           0  startup_cmt453x.o(STACK)
+    SystemCoreClock                          0x20000000   Data           4  system_cmt453x.o(.data)
+    CMD_FLASH_SE                             0x20000004   Data           4  cmt453x_qflash.o(.data)
+    CMD_FLASH_WRITE                          0x20000008   Data           4  cmt453x_qflash.o(.data)
+    CMD_FLASH_READ                           0x2000000c   Data           4  cmt453x_qflash.o(.data)
+    upd                                      0x20000014   Data           4  lcd.o(.data)
+    memoryData                               0x20000018   Data           8  memory.o(.data)
+    PADDING                                  0x20000020   Data          64  md5.o(.data)
+    trim_stored                              0x20000060   Data          52  system_cmt453x.o(.bss)
+    usbData                                  0x200003bc   Data        1044  usb_driver.o(.bss)
+    str_tmp                                  0x200007d0   Data         256  usb_driver.o(.bss)
+    lcdBuff_Current                          0x200008d0   Data          36  lcd.o(.bss)
+    lcdBuff_New                              0x200008f4   Data          35  lcd.o(.bss)
+    md5_Context                              0x20000918   Data          88  md5.o(.bss)
+    __initial_sp                             0x20001570   Data           0  startup_cmt453x.o(STACK)
 
 
 
@@ -893,9 +893,9 @@ Memory Map of the image
 
   Image Entry point : 0x010000c1
 
-  Load Region LR_IROM1 (Base: 0x01000000, Size: 0x0000626c, Max: 0x00008000, ABSOLUTE)
+  Load Region LR_IROM1 (Base: 0x01000000, Size: 0x0000626c, Max: 0x00040000, ABSOLUTE)
 
-    Execution Region ER_IROM1 (Exec base: 0x01000000, Load base: 0x01000000, Size: 0x0000620c, Max: 0x00008000, ABSOLUTE)
+    Execution Region ER_IROM1 (Exec base: 0x01000000, Load base: 0x01000000, Size: 0x0000620c, Max: 0x00040000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
@@ -972,22 +972,22 @@ Memory Map of the image
     0x010061ec   0x010061ec   0x00000020   Data   RO          833    Region$$Table       anon$$obj.o
 
 
-    Execution Region RW_IRAM1 (Exec base: 0x20004000, Load base: 0x0100620c, Size: 0x00001570, Max: 0x00008000, ABSOLUTE)
+    Execution Region RW_IRAM1 (Exec base: 0x20000000, Load base: 0x0100620c, Size: 0x00001570, Max: 0x00008000, ABSOLUTE)
 
     Exec Addr    Load Addr    Size         Type   Attr      Idx    E Section Name        Object
 
-    0x20004000   0x0100620c   0x00000004   Data   RW           14    .data               system_cmt453x.o
-    0x20004004   0x01006210   0x0000000c   Data   RW          186    .data               cmt453x_qflash.o
-    0x20004010   0x0100621c   0x00000008   Data   RW          360    .data               lcd.o
-    0x20004018   0x01006224   0x00000008   Data   RW          394    .data               memory.o
-    0x20004020   0x0100622c   0x00000040   Data   RW          456    .data               md5.o
-    0x20004060        -       0x00000034   Zero   RW           12    .bss                system_cmt453x.o
-    0x20004094        -       0x00000328   Zero   RW          184    .bss                cmt453x_qflash.o
-    0x200043bc        -       0x00000514   Zero   RW          319    .bss                usb_driver.o
-    0x200048d0        -       0x00000047   Zero   RW          358    .bss                lcd.o
-    0x20004917   0x0100626c   0x00000001   PAD
-    0x20004918        -       0x00000058   Zero   RW          455    .bss                md5.o
-    0x20004970        -       0x00000c00   Zero   RW            1    STACK               startup_cmt453x.o
+    0x20000000   0x0100620c   0x00000004   Data   RW           14    .data               system_cmt453x.o
+    0x20000004   0x01006210   0x0000000c   Data   RW          186    .data               cmt453x_qflash.o
+    0x20000010   0x0100621c   0x00000008   Data   RW          360    .data               lcd.o
+    0x20000018   0x01006224   0x00000008   Data   RW          394    .data               memory.o
+    0x20000020   0x0100622c   0x00000040   Data   RW          456    .data               md5.o
+    0x20000060        -       0x00000034   Zero   RW           12    .bss                system_cmt453x.o
+    0x20000094        -       0x00000328   Zero   RW          184    .bss                cmt453x_qflash.o
+    0x200003bc        -       0x00000514   Zero   RW          319    .bss                usb_driver.o
+    0x200008d0        -       0x00000047   Zero   RW          358    .bss                lcd.o
+    0x20000917   0x0100626c   0x00000001   PAD
+    0x20000918        -       0x00000058   Zero   RW          455    .bss                md5.o
+    0x20000970        -       0x00000c00   Zero   RW            1    STACK               startup_cmt453x.o
 
 
 ==============================================================================
